@@ -1,27 +1,63 @@
-class Item { 
-    constructor(public item: string){}
+/**
+ * @todo
+ * known issues:
+ * - getItems needs to await loadListFromDisk()
+ */
+
+// class Item_ { 
+//   public title: string
+//   constructor(title: string) {
+//     this.title = title
+//   }
+// }
+
+class Item {
+  constructor(public title: string) { }
 }
 
 class TodoList {
-    private itens: Item[] = [];
-    private filePath: String;
+  private items: Item[] = []
+  private filePath: string
 
-constructor(filePath: String){
-    this.filePath = filePath;
-}
-addItem(item: Item){
-    this.itens.push(item)
-}
+  constructor(filePath: string) {
+    this.filePath = filePath
+    this.loadListFromDisk()
+  }
 
-removeItem(index: number){
-    this.itens.splice(index; 1);
-}
+  private async saveListToDisk() {
+    const file = Bun.file(this.filePath)
+    const data = JSON.stringify(this.items)
+    await file.write(data)
+  }
 
-getItems(){
-    return this.itens
-}
-}
+  private async loadListFromDisk() {
+    const file = Bun.file(this.filePath)
+    // const text = await file.text()
+    // const data = JSON.parse(text)
+    const data = await file.json();
+    this.items = data.map((v: any) => new Item(v.title))
+  }
 
-const lista = new TodoList("arquivo.txt")
-lista.addItem(new Item("comprar abacate"))
-console.log
+  /**
+   * Função que adiciona um novo item a lista
+   */
+  async addItem(item: Item) {
+    this.items.push(item)
+    await this.saveListToDisk()
+  }
+
+  /**
+   * Remove item da lista por um indice
+   */
+  async removeItem(index: number) {
+    this.items.splice(index, 1)
+    await this.saveListToDisk()
+  }
+
+  /**
+   * Retorna a cópia da lista de itens
+   */
+  getItems() {
+    return Array.from(this.items)
+  }
+}
